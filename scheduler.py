@@ -5,7 +5,7 @@ import requests # Added for file download
 # --- Data Loading Section (Inserted) ---
 # URL of the raw CSV file
 csv_url = 'https://raw.githubusercontent.com/s22a0061/schedule/refs/heads/main/program_ratings.csv'
-file_path = '/content/program_ratings.csv'
+file_path = 'program_ratings.csv'
 
 try:
     # Download the file
