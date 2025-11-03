@@ -41,7 +41,7 @@ st.sidebar.title("⚙️ GA Parameters")
 
 # 1. Crossover Rate (CO_R)
 CO_R = st.sidebar.slider(
-    'Crossover Rate (CO_R)', 
+    'Crossover Rate', 
     min_value=0.0, 
     max_value=0.95, 
     value=0.8, 
@@ -52,7 +52,7 @@ CO_R = st.sidebar.slider(
 
 # 2. Mutation Rate (MUT_R)
 MUT_R = st.sidebar.slider(
-    'Mutation Rate (MUT_R)', 
+    'Mutation Rate', 
     min_value=0.01, 
     max_value=0.05, 
     value=0.02, 
