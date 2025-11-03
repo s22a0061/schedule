@@ -31,18 +31,39 @@ file_path = 'program_ratings.csv'
 # Get the data in the required format
 program_ratings_dict = read_csv_to_dict(file_path)
 
-# Print the result (you can also return or process it further)
-for program, ratings in program_ratings_dict.items():
-    print(f"'{program}': {ratings},")
-
 ##################################### DEFINING PARAMETERS AND DATASET ################################################################
 # Sample rating programs dataset for each time slot.
 ratings = program_ratings_dict
 
+# STREAMLIT INTERFACE FOR PARAMETER INPUT
+
+st.sidebar.title("⚙️ GA Parameters")
+
+# 1. Crossover Rate (CO_R)
+CO_R = st.sidebar.slider(
+    'Crossover Rate (CO_R)', 
+    min_value=0.0, 
+    max_value=0.95, 
+    value=0.8, 
+    step=0.05,
+    format='%.2f',
+    help='Probability that two individuals will swap genetic material (crossover).'
+)
+
+# 2. Mutation Rate (MUT_R)
+MUT_R = st.sidebar.slider(
+    'Mutation Rate (MUT_R)', 
+    min_value=0.01, 
+    max_value=0.05, 
+    value=0.02, 
+    step=0.01,
+    format='%.2f',
+    help='Probability that an individual will have a random change (mutation).'
+)
+
+# Other fixed parameters (KEEP THESE)
 GEN = 100
 POP = 50
-CO_R = 0.8
-MUT_R = 0.2
 EL_S = 2
 
 all_programs = list(ratings.keys()) # all programs
