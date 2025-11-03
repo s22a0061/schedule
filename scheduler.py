@@ -12,9 +12,16 @@ def read_csv_to_dict(file_path):
         header = next(reader)
         
         for row in reader:
+            # --- ADDED CHECK HERE ---
+            if not row:
+                continue # Skip the line if it's empty
+            # ------------------------
+            
             program = row[0]
-            ratings = [float(x) for x in row[1:]]  # Convert the ratings to floats
-            program_ratings[program] = ratings
+            # Ensure the remaining columns are present before slicing
+            if len(row) > 1:
+                ratings = [float(x) for x in row[1:]]  # Convert the ratings to floats
+                program_ratings[program] = ratings
     
     return program_ratings
 
