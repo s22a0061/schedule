@@ -156,8 +156,8 @@ def evaluate_fitness(schedule):
 
 # genetic algorithms with parameters
 
-def genetic_algorithm(initial_schedule, generations=GEN, population_size=POP, crossover_rate, mutation_rate, elitism_size=EL_S):
-
+def genetic_algorithm(initial_schedule, crossover_rate, mutation_rate, generations=GEN, population_size=POP, elitism_size=EL_S):
+    
     population = [initial_schedule]
 
     for _ in range(population_size - 1):
