@@ -167,57 +167,109 @@ def genetic_algorithm(initial_schedule, generations=GEN, population_size=POP, cr
 
     return population[0]
 
-##################################################### RESULTS ###################################################################################
+##################################################### TRIAL EXECUTION FUNCTION #####################################################################
 
-# brute force
-initial_best_schedule = finding_best_schedule(all_possible_schedules)
+def run_ga_trial(trial_name, co_r, mut_r):
+    """Executes the Genetic Algorithm and returns the results for display."""
+    
+    # 1. Brute Force (Initial State) - This part only needs to run once but is included
+    #    here for clarity, assuming all_possible_schedules is computed once globally.
+    #    NOTE: If all_possible_schedules is massive, running this 3 times is slow.
+    #    We assume it's pre-computed/cached outside this function.
+    initial_best_schedule = finding_best_schedule(all_possible_schedules)
+    
+    # 2. Run the Genetic Algorithm with provided parameters
+    rem_t_slots = len(all_time_slots) - len(initial_best_schedule)
+    
+    # Run the GA for optimization
+    genetic_schedule = genetic_algorithm(
+        initial_best_schedule, 
+        generations=GEN, 
+        population_size=POP, 
+        crossover_rate=co_r, 
+        mutation_rate=mut_r, 
+        elitism_size=EL_S
+    )
+    
+    # Determine the final schedule based on your original logic
+    if rem_t_slots > 0:
+        final_schedule = initial_best_schedule + genetic_schedule[:rem_t_slots]
+    else:
+        # If the schedule is full (e.g., 18 programs), the GA result is the final schedule
+        final_schedule = genetic_schedule
+    
+    # 3. Calculate Fitness
+    total_ratings = fitness_function(final_schedule)
+    
+    # 4. Format Results
+    schedule_data = []
+    for time_slot, program in enumerate(final_schedule):
+        time_str = f"{all_time_slots[time_slot]:02d}:00"
+        rating = ratings[program][time_slot]
+        schedule_data.append({
+            "Time Slot": time_str,
+            "Program": program,
+            "Expected Rating": f"{rating:.3f}"
+        })
 
-# NOTE: The Brute Force section is computationally expensive and
-# 'initial_best_schedule' will only contain programs for the length
-# of 'all_programs'. For an 18-hour schedule, 'all_programs' must have 18 items.
-# If 'all_programs' < 18, this section will lead to an incomplete schedule.
+    return final_schedule, total_ratings, schedule_data
 
-# Assuming your brute force is finding the best schedule for the programs available
-# and you want the GA to fill the remaining time slots, as per your original logic:
+##################################################### STREAMLIT INTERFACE #####################################################################
 
-rem_t_slots = len(all_time_slots) - len(initial_best_schedule)
-genetic_schedule = genetic_algorithm(initial_best_schedule, generations=GEN, population_size=POP, elitism_size=EL_S)
+st.title("📺 GA Scheduling Optimization - Multi-Trial Analysis")
 
-# Adjust 'final_schedule' to handle the case where brute force found the full schedule
-if rem_t_slots > 0:
-    final_schedule = initial_best_schedule + genetic_schedule[:rem_t_slots]
-else:
-    # If initial_best_schedule is full (len=18), use the GA to optimize it further
-    final_schedule = genetic_algorithm(initial_best_schedule, generations=GEN, population_size=POP, elitism_size=EL_S)
+# --- Run 3 Trials and Display Results ---
+for i in range(1, 4): # Loop for Trial 1, 2, and 3
+    
+    trial_name = f"Trial {i}"
+    
+    # Use an expander to organize input and output for each trial
+    with st.expander(f"**{trial_name} Parameters and Results**", expanded=(i == 1)):
+        
+        # 1. Parameter Input using st.columns for a neat layout
+        st.subheader(f"{trial_name} Parameter Setup")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Crossover Rate (CO_R) - Default values slightly varied for demonstrative effect
+            default_co_r = [0.8, 0.6, 0.9][i-1]
+            co_r = st.slider(
+                f'Crossover Rate (CO_R) for {trial_name}', 
+                min_value=0.0, 
+                max_value=0.95, 
+                value=default_co_r, 
+                step=0.05,
+                key=f'co_r_{i}', # Unique key is ESSENTIAL for Streamlit widgets in a loop
+                format='%.2f'
+            )
 
-
-# **Replace your original print statements with Streamlit components**
-
-st.title("📺 Optimal TV Scheduling with Genetic Algorithm")
-
-st.header("Genetic Algorithm Parameters")
-st.write(f"**Generations:** {GEN}")
-st.write(f"**Population Size:** {POP}")
-st.write(f"**Crossover Rate:** {CO_R}")
-st.write(f"**Mutation Rate:** {MUT_R}")
-
-st.header("Final Optimal Schedule")
-
-schedule_data = []
-for time_slot, program in enumerate(final_schedule):
-    time_str = f"{all_time_slots[time_slot]:02d}:00"
-    rating = ratings[program][time_slot]
-    schedule_data.append({
-        "Time Slot": time_str,
-        "Program": program,
-        "Expected Rating": f"{rating:.2f}"
-    })
-
-import pandas as pd
-st.dataframe(pd.DataFrame(schedule_data), use_container_width=True)
-
-total_ratings = fitness_function(final_schedule)
-st.metric("Total Expected Audience Ratings", f"{total_ratings:.2f}")
+        with col2:
+            # Mutation Rate (MUT_R) - Default values slightly varied
+            default_mut_r = [0.02, 0.05, 0.01][i-1]
+            mut_r = st.slider(
+                f'Mutation Rate (MUT_R) for {trial_name}', 
+                min_value=0.01, 
+                max_value=0.05, 
+                value=default_mut_r, 
+                step=0.01,
+                key=f'mut_r_{i}', # Unique key is ESSENTIAL
+                format='%.2f'
+            )
+        
+        st.info(f"Using CO_R: **{co_r:.2f}**, MUT_R: **{mut_r:.2f}**")
+        
+        # 2. Execute the GA Trial
+        final_schedule, total_ratings, schedule_data = run_ga_trial(trial_name, co_r, mut_r)
+        
+        # 3. Display Results
+        st.subheader(f"Optimal Schedule for {trial_name}")
+        
+        # Display the Total Rating (Required output)
+        st.metric("Total Expected Audience Ratings", f"{total_ratings:.3f}")
+        
+        # Display the Schedule Table (Required output)
+        import pandas as pd
+        st.dataframe(pd.DataFrame(schedule_data), use_container_width=True)
 
 st.subheader("Implementation Details")
 st.code("""
