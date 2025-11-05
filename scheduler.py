@@ -36,32 +36,6 @@ program_ratings_dict = read_csv_to_dict(file_path)
 # Sample rating programs dataset for each time slot.
 ratings = program_ratings_dict
 
-# STREAMLIT INTERFACE FOR PARAMETER INPUT
-
-st.sidebar.title("⚙️ GA Parameters")
-
-# 1. Crossover Rate (CO_R)
-CO_R = st.sidebar.slider(
-    'Crossover Rate', 
-    min_value=0.0, 
-    max_value=0.95, 
-    value=0.8, 
-    step=0.05,
-    format='%.2f',
-    help='Probability that two individuals will swap genetic material (crossover).'
-)
-
-# 2. Mutation Rate (MUT_R)
-MUT_R = st.sidebar.slider(
-    'Mutation Rate', 
-    min_value=0.01, 
-    max_value=0.05, 
-    value=0.02, 
-    step=0.01,
-    format='%.2f',
-    help='Probability that an individual will have a random change (mutation).'
-)
-
 # Other fixed parameters (KEEP THESE)
 GEN = 100
 POP = 50
@@ -289,63 +263,6 @@ for i, (co_r, mut_r) in enumerate(trial_params, 1): # Iterate over the collected
         st.metric("Total Expected Audience Ratings", f"{total_ratings:.3f}")
         
         # Display the Schedule Table (Required output)
-        st.dataframe(pd.DataFrame(schedule_data), use_container_width=True)
-        
-##################################################### STREAMLIT INTERFACE #####################################################################
-
-st.title("📺 GA Scheduling Optimization - Multi-Trial Analysis")
-
-# --- Run 3 Trials and Display Results ---
-for i in range(1, 4): # Loop for Trial 1, 2, and 3
-    
-    trial_name = f"Trial {i}"
-    
-    # Use an expander to organize input and output for each trial
-    with st.expander(f"**{trial_name} Parameters and Results**", expanded=(i == 1)):
-        
-        # 1. Parameter Input using st.columns for a neat layout
-        st.subheader(f"{trial_name} Parameter Setup")
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Crossover Rate (CO_R) - Default values slightly varied for demonstrative effect
-            default_co_r = [0.8, 0.6, 0.9][i-1]
-            co_r = st.slider(
-                f'Crossover Rate (CO_R) for {trial_name}', 
-                min_value=0.0, 
-                max_value=0.95, 
-                value=default_co_r, 
-                step=0.05,
-                key=f'co_r_{i}', # Unique key is ESSENTIAL for Streamlit widgets in a loop
-                format='%.2f'
-            )
-
-        with col2:
-            # Mutation Rate (MUT_R) - Default values slightly varied
-            default_mut_r = [0.02, 0.05, 0.01][i-1]
-            mut_r = st.slider(
-                f'Mutation Rate (MUT_R) for {trial_name}', 
-                min_value=0.01, 
-                max_value=0.05, 
-                value=default_mut_r, 
-                step=0.01,
-                key=f'mut_r_{i}', # Unique key is ESSENTIAL
-                format='%.2f'
-            )
-        
-        st.info(f"Using CO_R: **{co_r:.2f}**, MUT_R: **{mut_r:.2f}**")
-        
-        # 2. Execute the GA Trial
-        final_schedule, total_ratings, schedule_data = run_ga_trial(trial_name, co_r, mut_r)
-        
-        # 3. Display Results
-        st.subheader(f"Optimal Schedule for {trial_name}")
-        
-        # Display the Total Rating (Required output)
-        st.metric("Total Expected Audience Ratings", f"{total_ratings:.3f}")
-        
-        # Display the Schedule Table (Required output)
-        import pandas as pd
         st.dataframe(pd.DataFrame(schedule_data), use_container_width=True)
 
 st.subheader("Implementation Details")
