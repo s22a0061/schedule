@@ -36,8 +36,6 @@ program_ratings_dict = read_csv_to_dict(file_path)
 # Sample rating programs dataset for each time slot.
 ratings = program_ratings_dict
 
-# --- REMOVED REDUNDANT GLOBAL CO_R AND MUT_R SLIDERS HERE ---
-
 # Other fixed parameters (KEEP THESE)
 GEN = 100
 POP = 50
@@ -67,7 +65,7 @@ st.sidebar.caption("Adjust the Crossover and Mutation rates for each trial.")
 # List to hold the selected parameters for each trial
 trial_params = []
 
-# --- Move Parameter Inputs to Sidebar (THIS IS CORRECTLY IMPLEMENTED) ---
+# --- Move Parameter Inputs to Sidebar ---
 for i in range(1, 4):
     trial_name = f"Trial {i}"
     
@@ -112,8 +110,6 @@ def initialize_pop(programs, time_slots):
         return [[]]
 
     all_schedules = []
-    # NOTE: This brute-force population initialization is extremely slow if len(programs) > 10.
-    # It generates len(programs)! permutations.
     for i in range(len(programs)):
         for schedule in initialize_pop(programs[:i] + programs[i + 1:], time_slots):
             all_schedules.append([programs[i]] + schedule)
@@ -134,16 +130,13 @@ def finding_best_schedule(all_schedules):
     return best_schedule
 
 # calling the pop func.
-# NOTE: The execution may stall here if you have more than ~10 programs.
 all_possible_schedules = initialize_pop(all_programs, all_time_slots)
 
 # callin the schedule func.
 best_schedule = finding_best_schedule(all_possible_schedules)
 
-
 ############################################# GENETIC ALGORITHM #############################################################################
 
-# Crossover - *** LOGICAL ERROR: Does not guarantee a valid permutation (can introduce duplicates/misses) ***
 def crossover(schedule1, schedule2):
     crossover_point = random.randint(1, len(schedule1) - 2)
     child1 = schedule1[:crossover_point] + schedule2[crossover_point:]
@@ -198,7 +191,51 @@ def genetic_algorithm(initial_schedule, generations=GEN, population_size=POP, cr
     return population[0]
 
 ##################################################### TRIAL EXECUTION FUNCTION #####################################################################
-# ... (run_ga_trial function remains unchanged) ...
+
+def run_ga_trial(trial_name, co_r, mut_r):
+    """Executes the Genetic Algorithm and returns the results for display."""
+    
+    # 1. Brute Force (Initial State) - This part only needs to run once but is included
+    #    here for clarity, assuming all_possible_schedules is computed once globally.
+    #    NOTE: If all_possible_schedules is massive, running this 3 times is slow.
+    #    We assume it's pre-computed/cached outside this function.
+    initial_best_schedule = finding_best_schedule(all_possible_schedules)
+    
+    # 2. Run the Genetic Algorithm with provided parameters
+    rem_t_slots = len(all_time_slots) - len(initial_best_schedule)
+    
+    # Run the GA for optimization
+    genetic_schedule = genetic_algorithm(
+        initial_best_schedule, 
+        generations=GEN, 
+        population_size=POP, 
+        crossover_rate=co_r, 
+        mutation_rate=mut_r, 
+        elitism_size=EL_S
+    )
+    
+    # Determine the final schedule based on your original logic
+    if rem_t_slots > 0:
+        final_schedule = initial_best_schedule + genetic_schedule[:rem_t_slots]
+    else:
+        # If the schedule is full (e.g., 18 programs), the GA result is the final schedule
+        final_schedule = genetic_schedule
+    
+    # 3. Calculate Fitness
+    total_ratings = fitness_function(final_schedule)
+    
+    # 4. Format Results
+    schedule_data = []
+    for time_slot, program in enumerate(final_schedule):
+        time_str = f"{all_time_slots[time_slot]:02d}:00"
+        rating = ratings[program][time_slot]
+        schedule_data.append({
+            "Time Slot": time_str,
+            "Program": program,
+            "Expected Rating": f"{rating:.3f}"
+        })
+
+    return final_schedule, total_ratings, schedule_data
 
 ##################################################### MAIN EXECUTION & DISPLAY #####################################################################
 
